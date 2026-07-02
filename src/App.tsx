@@ -6,6 +6,7 @@ import { SidePanel } from './components/SidePanel'
 import { NouvelOrdreModal } from './components/NouvelOrdreModal'
 import { OrdreDetailModal } from './components/OrdreDetailModal'
 import { LoginScreen } from './components/LoginScreen'
+import { EcranStatut } from './components/EcranStatut'
 import { supabase } from './supabaseClient'
 import { chargerUnites } from './data/unitesRepository'
 import { chargerProfil } from './data/profilRepository'
@@ -41,7 +42,10 @@ export default function App() {
         setUnites(u)
         setOrdres(o)
       })
-      .catch((err) => setErreur(messageErreur(err)))
+      .catch((err) => {
+        console.error(err)
+        setErreur(messageErreur(err))
+      })
   }, [session])
 
   useEffect(() => {
@@ -52,7 +56,10 @@ export default function App() {
         setProfil({ id: session.user.id, ...p, uniteNom: unite?.nom ?? '—' })
         setSelectedUniteId(p.uniteId)
       })
-      .catch((err) => setErreur(messageErreur(err)))
+      .catch((err) => {
+        console.error(err)
+        setErreur(messageErreur(err))
+      })
   }, [session, unites])
 
   const ordreSelectionne = ordres?.find((o) => o.id === ordreSelectionneId) ?? null
@@ -73,12 +80,17 @@ export default function App() {
 
   if (erreur) {
     return (
-      <div className="flex h-full items-center justify-center bg-slate-950 text-red-400">Erreur : {erreur}</div>
+      <EcranStatut
+        titre="Impossible de charger les données"
+        sousTitre={erreur}
+        erreur
+        onReessayer={() => window.location.reload()}
+      />
     )
   }
 
   if (session === undefined) {
-    return <div className="flex h-full items-center justify-center bg-slate-950 text-slate-400">Vérification…</div>
+    return <EcranStatut titre="Vérification de la session…" />
   }
 
   if (session === null) {
@@ -86,9 +98,7 @@ export default function App() {
   }
 
   if (!unites || !profil || !ordres) {
-    return (
-      <div className="flex h-full items-center justify-center bg-slate-950 text-slate-400">Chargement…</div>
-    )
+    return <EcranStatut titre="Chargement du dispositif…" />
   }
 
   return (
