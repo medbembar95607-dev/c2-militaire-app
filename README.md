@@ -22,6 +22,19 @@ npm run dev
 
 Comptes de démonstration : voir `../cadrage-app-c2/05-securite/comptes-demo.md` (non versionné, contient des mots de passe).
 
+## Démo en ligne
+
+**https://medbembar95607-dev.github.io/c2-militaire-app/**
+
+Hébergé sur GitHub Pages, branche `gh-pages` (fichiers statiques, pas de CI/CD pour l'instant). Pour republier après un changement :
+
+```bash
+npx vite build --base=/c2-militaire-app/ --outDir dist-pages
+# copier le contenu de dist-pages/ sur la branche gh-pages et pousser
+```
+
+Sous Windows avec Git Bash, exporter `MSYS_NO_PATHCONV=1` avant la commande `vite build` ci-dessus, sinon le chemin `--base` est réécrit en chemin Windows par erreur.
+
 ## Base de données
 
 Le schéma vit dans `supabase/migrations/`, à appliquer dans l'ordre (numéros de préfixe) via l'éditeur SQL du dashboard Supabase ou la CLI `supabase`. Pas encore de tooling de migration automatisé — chaque fichier est un script SQL à rejouer une fois sur le projet cible.
