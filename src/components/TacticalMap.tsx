@@ -1,10 +1,15 @@
 import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import ms from 'milsymbol'
 import { Crosshair } from 'lucide-react'
 import type { Feature, LineString, Polygon } from 'geojson'
 import type { Unite } from '../types'
-import { echelonChiffre, typeUniteStyle } from '../uniteStyle'
+import { couleurAmie, echelonChiffre, typeUniteSidc, typeUniteStyle } from '../uniteStyle'
+
+function symboleSvg(unite: Pick<Unite, 'typeUnite'>, taille: number) {
+  return new ms.Symbol(typeUniteSidc[unite.typeUnite], { size: taille, fillColor: couleurAmie }).asSVG()
+}
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/dark'
 const CENTRE_INITIAL: [number, number] = [-11.98, 18.02]
@@ -94,7 +99,6 @@ export function TacticalMap({ unites, selectedUniteId, onSelectUnite }: Tactical
       })
 
       unites.forEach((unite) => {
-        const style = typeUniteStyle[unite.typeUnite]
         const el = document.createElement('button')
         el.className = 'flex flex-col items-center cursor-pointer'
         el.innerHTML = `
@@ -103,7 +107,7 @@ export function TacticalMap({ unites, selectedUniteId, onSelectUnite }: Tactical
               ? `<span class="mb-0.5 text-[11px] font-bold text-white" style="text-shadow:0 1px 3px #000">${echelonChiffre[unite.echelon]}</span>`
               : ''
           }
-          <span class="flex h-9 w-9 items-center justify-center rounded border-2 bg-slate-950 text-[11px] font-bold ${style.text} ${style.border}">${style.sigle}</span>
+          <span class="drop-shadow-md">${symboleSvg(unite, 24)}</span>
           <span class="mt-1 whitespace-nowrap rounded bg-slate-950/80 px-1 text-[10px] text-slate-300">${unite.nom}</span>
         `
         el.addEventListener('click', (e) => {
@@ -129,12 +133,11 @@ export function TacticalMap({ unites, selectedUniteId, onSelectUnite }: Tactical
     if (!selectedUniteId) return
     const unite = unites.find((u) => u.id === selectedUniteId)
     if (!unite) return
-    const style = typeUniteStyle[unite.typeUnite]
 
     const contenu = document.createElement('div')
     contenu.innerHTML = `
       <div class="mb-2 flex items-center gap-2">
-        <span class="h-3 w-3 rounded-sm ${style.marker}"></span>
+        ${symboleSvg(unite, 16)}
         <span class="font-bold text-slate-100">${unite.nom}</span>
       </div>
       <div class="flex justify-between text-slate-400 text-xs">
@@ -162,7 +165,7 @@ export function TacticalMap({ unites, selectedUniteId, onSelectUnite }: Tactical
         <div className="space-y-1.5">
           {(Object.keys(typeUniteStyle) as Array<keyof typeof typeUniteStyle>).map((type) => (
             <div key={type} className="flex items-center gap-2">
-              <span className={`h-3 w-3 rounded-sm ${typeUniteStyle[type].marker}`} />
+              <span dangerouslySetInnerHTML={{ __html: symboleSvg({ typeUnite: type }, 16) }} />
               {typeUniteStyle[type].label}
             </div>
           ))}

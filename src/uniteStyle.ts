@@ -8,6 +8,19 @@ export const typeUniteStyle: Record<TypeUnite, { label: string; sigle: string; t
   logistique: { label: 'Logistique', sigle: 'LOG', text: 'text-cyan-300', bg: 'bg-cyan-950', border: 'border-cyan-500', marker: 'bg-cyan-600' },
 }
 
+// SIDC APP-6/MIL-STD-2525E : unité terrestre amie présente (SFGP) + function id.
+// Échelon volontairement absent du SIDC, déjà affiché séparément via echelonChiffre.
+export const typeUniteSidc: Record<TypeUnite, string> = {
+  pc: 'SFGPU---------------',
+  infanterie: 'SFGPUCI-------------',
+  artillerie: 'SFGPUCF-------------',
+  genie: 'SFGPUCE-------------',
+  logistique: 'SFGPUSS-------------',
+}
+
+// Couleur de remplissage APP-6 standard pour une unité amie (bleu/cyan).
+export const couleurAmie = '#3b82f6'
+
 export const echelonChiffre: Record<EchelonUnite, string> = {
   groupement: 'III',
   bataillon: 'II',
