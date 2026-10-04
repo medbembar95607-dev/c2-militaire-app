@@ -36,3 +36,10 @@ body {
   border-color: #94a3b8 !important;
   color: #cbd5e1 !important;
 }
+
+/* Mode placement d'un renseignement : les clics traversent symboles et popups
+   pour atteindre la carte, même si le point visé est sous un marqueur. */
+.placement-actif .maplibregl-marker,
+.placement-actif .maplibregl-popup {
+  pointer-events: none;
+}

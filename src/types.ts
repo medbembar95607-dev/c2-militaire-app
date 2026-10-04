@@ -8,6 +8,7 @@ export interface Unite {
   typeUnite: TypeUnite
   echelon: EchelonUnite
   statut: StatutUnite
+  uniteParentId: string | null
   lon: number
   lat: number
   coordonneesMgrs: string
@@ -43,4 +44,27 @@ export interface Profil {
   role: string
   uniteId: string
   uniteNom: string
+}
+
+export type TypeMenace = 'infanterie' | 'blinde' | 'artillerie' | 'reconnaissance' | 'engin_explosif' | 'inconnu'
+export type AffiliationMenace = 'hostile' | 'suspect' | 'inconnu'
+export type SourceRenseignement = 'observation' | 'humint' | 'sigint' | 'imint' | 'osint'
+export type FiabiliteSource = 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+export type StatutRenseignement = 'actif' | 'neutralise' | 'perime'
+
+export interface Renseignement {
+  id: string
+  titre: string
+  description: string
+  typeMenace: TypeMenace
+  affiliation: AffiliationMenace
+  source: SourceRenseignement
+  fiabiliteSource: FiabiliteSource
+  credibiliteInfo: number
+  statut: StatutRenseignement
+  lon: number
+  lat: number
+  coordonneesMgrs: string
+  horodatageObservation: string
+  uniteSourceId: string
 }
