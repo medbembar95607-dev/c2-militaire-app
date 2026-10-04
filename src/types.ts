@@ -68,3 +68,28 @@ export interface Renseignement {
   horodatageObservation: string
   uniteSourceId: string
 }
+
+export type Ressource = 'carburant' | 'munitions' | 'eau' | 'vivres' | 'sante'
+export type PrioriteDemande = 'routine' | 'urgent' | 'vital'
+export type StatutDemande = 'demandee' | 'en_cours' | 'livree' | 'refusee'
+
+export interface Stock {
+  id: string
+  uniteId: string
+  ressource: Ressource
+  quantite: number
+  capacite: number
+  uniteMesure: string
+  misAJourLe: string
+}
+
+export interface DemandeRavitaillement {
+  id: string
+  uniteDemandeuseId: string
+  ressource: Ressource
+  quantite: number
+  priorite: PrioriteDemande
+  statut: StatutDemande
+  commentaire: string
+  creeLe: string
+}

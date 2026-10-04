@@ -8,6 +8,7 @@ import type { Renseignement, Unite } from '../types'
 import { couleurAmie, echelonChiffre, typeUniteSidc, typeUniteStyle } from '../uniteStyle'
 import { cotationClassName, sidcRenseignement, sourceLabel, statutRenseignementStyle, typeMenaceLabel } from '../renseignementStyle'
 import { formatHeure } from '../data/coordonnees'
+import { niveauStyle, type NiveauStock } from '../logistiqueStyle'
 
 function symboleSvg(unite: Pick<Unite, 'typeUnite'>, taille: number) {
   return new ms.Symbol(typeUniteSidc[unite.typeUnite], { size: taille, fillColor: couleurAmie }).asSVG()
@@ -61,6 +62,7 @@ const PL_ROUGE: Feature<LineString> = {
 interface TacticalMapProps {
   unites: Unite[]
   renseignements: Renseignement[]
+  niveauLogistiqueParUnite: Record<string, NiveauStock>
   selectedUniteId: string | null
   onSelectUnite: (id: string) => void
   selectedRenseignementId: string | null
@@ -74,6 +76,7 @@ interface TacticalMapProps {
 export function TacticalMap({
   unites,
   renseignements,
+  niveauLogistiqueParUnite,
   selectedUniteId,
   onSelectUnite,
   selectedRenseignementId,
@@ -86,6 +89,7 @@ export function TacticalMap({
   const mapRef = useRef<maplibregl.Map | null>(null)
   const popupRef = useRef<maplibregl.Popup | null>(null)
   const marqueursMenacesRef = useRef<maplibregl.Marker[]>([])
+  const pastillesLogRef = useRef(new Map<string, HTMLElement>())
   const [carteChargee, setCarteChargee] = useState(false)
   const onSelectUniteRef = useRef(onSelectUnite)
   onSelectUniteRef.current = onSelectUnite
@@ -154,8 +158,11 @@ export function TacticalMap({
               : ''
           }
           <span class="drop-shadow-md">${symboleSvg(unite, 24)}</span>
-          <span class="mt-1 whitespace-nowrap rounded bg-slate-950/80 px-1 text-[10px] text-slate-300">${unite.nom}</span>
+          <span class="mt-1 flex items-center gap-1 whitespace-nowrap rounded bg-slate-950/80 px-1 text-[10px] text-slate-300">
+            <span data-pastille-log class="inline-block h-1.5 w-1.5 rounded-full"></span>${unite.nom}
+          </span>
         `
+        pastillesLogRef.current.set(unite.id, el.querySelector('[data-pastille-log]')!)
         el.addEventListener('click', (e) => {
           e.stopPropagation()
           onSelectUniteRef.current(unite.id)
@@ -201,6 +208,16 @@ export function TacticalMap({
         return new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([r.lon, r.lat]).addTo(map)
       })
   }, [renseignements, carteChargee])
+
+  // Pastille devant le nom de l'unité : pire niveau de ses stocks.
+  useEffect(() => {
+    if (!carteChargee) return
+    pastillesLogRef.current.forEach((el, uniteId) => {
+      const niveau = niveauLogistiqueParUnite[uniteId]
+      el.style.background = niveau ? niveauStyle[niveau].pastille : 'transparent'
+      el.title = niveau ? `Logistique : ${niveauStyle[niveau].label.toLowerCase()}` : ''
+    })
+  }, [niveauLogistiqueParUnite, carteChargee])
 
   useEffect(() => {
     const canvas = mapRef.current?.getCanvas()

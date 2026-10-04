@@ -1,6 +1,6 @@
 # C2 Militaire — Poste de commandement
 
-Application de gestion des opérations militaires sur fond cartographique interactif (React + TypeScript + Supabase). Écran v1 : poste de commandement (carte, unités, flux d'ordres, authentification). Module Renseignement v1.1 : menaces sur la carte, saisie et cotation OTAN.
+Application de gestion des opérations militaires sur fond cartographique interactif (React + TypeScript + Supabase). Écran v1 : poste de commandement (carte, unités, flux d'ordres, authentification). Modules v1.1 : Renseignement (menaces sur la carte, saisie et cotation OTAN) et Logistique (stocks par unité, demandes de ravitaillement).
 
 Le cadrage complet (besoins, décisions d'architecture, modèle de données) vit dans [`../cadrage-app-c2/`](../cadrage-app-c2/), pas ici. Ce README couvre uniquement le code.
 
@@ -39,7 +39,7 @@ Sous Windows avec Git Bash, exporter `MSYS_NO_PATHCONV=1` avant la commande `vit
 
 Le schéma vit dans `supabase/migrations/`, à appliquer dans l'ordre (numéros de préfixe) via l'éditeur SQL du dashboard Supabase ou la CLI `supabase`. Pas encore de tooling de migration automatisé — chaque fichier est un script SQL à rejouer une fois sur le projet cible.
 
-Résumé de ce qu'elles mettent en place : schéma des 6 tables (`unites`, `positions`, `ordres`, `ordres_destinataires`, `profils`, `renseignements`) avec PostGIS et RLS, données de démonstration, comptes de test, hiérarchie de commandement, et policies de sécurité (dont une visibilité des ordres qui remonte la chaîne de commandement). Détail des décisions dans `../cadrage-app-c2/03-donnees/modele-donnees.md`.
+Résumé de ce qu'elles mettent en place : schéma des 8 tables (`unites`, `positions`, `ordres`, `ordres_destinataires`, `profils`, `renseignements`, `stocks`, `demandes_ravitaillement`) avec PostGIS et RLS, données de démonstration, comptes de test, hiérarchie de commandement, et policies de sécurité (dont une visibilité des ordres qui remonte la chaîne de commandement). Détail des décisions dans `../cadrage-app-c2/03-donnees/modele-donnees.md`.
 
 ## Structure
 

@@ -1,4 +1,5 @@
 import { ChevronRight } from 'lucide-react'
+import type { ReactNode } from 'react'
 import ms from 'milsymbol'
 import type { Ordre, Renseignement, Unite } from '../types'
 import { echelonLabel, typeUniteStyle } from '../uniteStyle'
@@ -12,7 +13,7 @@ import {
 } from '../renseignementStyle'
 import { formatHeure } from '../data/coordonnees'
 
-export type OngletPanneau = 'unites' | 'ordres' | 'rens'
+export type OngletPanneau = 'unites' | 'ordres' | 'rens' | 'log'
 
 interface SidePanelProps {
   unites: Unite[]
@@ -28,6 +29,8 @@ interface SidePanelProps {
   onSelectOrdre: (id: string) => void
   onNouveauRenseignement: () => void
   onOuvrirRenseignement: (id: string) => void
+  contenuLogistique: ReactNode
+  nbAlertesLogistique: number
 }
 
 // Actifs d'abord, puis périmés, puis neutralisés ; les plus récents en tête.
@@ -47,6 +50,8 @@ export function SidePanel({
   onSelectOrdre,
   onNouveauRenseignement,
   onOuvrirRenseignement,
+  contenuLogistique,
+  nbAlertesLogistique,
 }: SidePanelProps) {
   const uniteParId = new Map(unites.map((u) => [u.id, u]))
   const nbMenacesActives = renseignements.filter((r) => r.statut === 'actif').length
@@ -61,7 +66,7 @@ export function SidePanel({
       <div className="flex border-b border-slate-800">
         <button
           onClick={() => onChangerOnglet('unites')}
-          className={`flex-1 border-b-2 px-2 py-3 text-sm font-bold uppercase tracking-wide ${
+          className={`flex-1 border-b-2 px-1 py-3 text-xs font-bold uppercase tracking-wide ${
             ongletActif === 'unites' ? 'border-blue-500 text-slate-100' : 'border-transparent text-slate-500'
           }`}
         >
@@ -69,7 +74,7 @@ export function SidePanel({
         </button>
         <button
           onClick={() => onChangerOnglet('ordres')}
-          className={`flex-1 border-b-2 px-2 py-3 text-sm font-bold uppercase tracking-wide ${
+          className={`flex-1 border-b-2 px-1 py-3 text-xs font-bold uppercase tracking-wide ${
             ongletActif === 'ordres' ? 'border-blue-500 text-slate-100' : 'border-transparent text-slate-500'
           }`}
         >
@@ -77,15 +82,25 @@ export function SidePanel({
         </button>
         <button
           onClick={() => onChangerOnglet('rens')}
-          className={`flex-1 border-b-2 px-2 py-3 text-sm font-bold uppercase tracking-wide ${
+          className={`flex-1 border-b-2 px-1 py-3 text-xs font-bold uppercase tracking-wide ${
             ongletActif === 'rens' ? 'border-red-500 text-slate-100' : 'border-transparent text-slate-500'
           }`}
         >
           Rens <span className="ml-1 text-xs text-red-400">{nbMenacesActives}</span>
         </button>
+        <button
+          onClick={() => onChangerOnglet('log')}
+          className={`flex-1 border-b-2 px-1 py-3 text-xs font-bold uppercase tracking-wide ${
+            ongletActif === 'log' ? 'border-amber-500 text-slate-100' : 'border-transparent text-slate-500'
+          }`}
+        >
+          Log <span className="ml-1 text-xs text-amber-400">{nbAlertesLogistique}</span>
+        </button>
       </div>
 
-      {ongletActif === 'rens' ? (
+      {ongletActif === 'log' ? (
+        contenuLogistique
+      ) : ongletActif === 'rens' ? (
         <div className="flex-1 overflow-y-auto">
           <div className="flex items-center justify-between px-4 py-2">
             <span className="text-xs font-bold uppercase tracking-wide text-slate-500">

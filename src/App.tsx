@@ -7,6 +7,8 @@ import { NouvelOrdreModal } from './components/NouvelOrdreModal'
 import { OrdreDetailModal } from './components/OrdreDetailModal'
 import { NouveauRenseignementModal } from './components/NouveauRenseignementModal'
 import { RenseignementDetailModal } from './components/RenseignementDetailModal'
+import { LogistiquePanel } from './components/LogistiquePanel'
+import { LogistiqueUniteModal } from './components/LogistiqueUniteModal'
 import { LoginScreen } from './components/LoginScreen'
 import { EcranStatut } from './components/EcranStatut'
 import { supabase } from './supabaseClient'
@@ -18,8 +20,17 @@ import {
   chargerRenseignements,
   creerRenseignement as creerRenseignementDb,
 } from './data/renseignementsRepository'
+import {
+  changerStatutDemande,
+  chargerDemandes,
+  chargerStocks,
+  creerDemande,
+  livrerDemande,
+  mettreAJourStocks,
+} from './data/logistiqueRepository'
+import { pireNiveau, type NiveauStock } from './logistiqueStyle'
 import { messageErreur } from './erreurUtils'
-import type { Ordre, Profil, Renseignement, StatutRenseignement, Unite } from './types'
+import type { DemandeRavitaillement, Ordre, Profil, Renseignement, StatutRenseignement, Stock, Unite } from './types'
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined)
@@ -27,6 +38,9 @@ export default function App() {
   const [profil, setProfil] = useState<Profil | null>(null)
   const [ordres, setOrdres] = useState<Ordre[] | null>(null)
   const [renseignements, setRenseignements] = useState<Renseignement[] | null>(null)
+  const [stocks, setStocks] = useState<Stock[] | null>(null)
+  const [demandes, setDemandes] = useState<DemandeRavitaillement[] | null>(null)
+  const [uniteLogOuverteId, setUniteLogOuverteId] = useState<string | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
 
   const [selectedUniteId, setSelectedUniteId] = useState<string | null>(null)
@@ -51,11 +65,13 @@ export default function App() {
 
   useEffect(() => {
     if (!session) return
-    Promise.all([chargerUnites(), chargerOrdres(), chargerRenseignements()])
-      .then(([u, o, r]) => {
+    Promise.all([chargerUnites(), chargerOrdres(), chargerRenseignements(), chargerStocks(), chargerDemandes()])
+      .then(([u, o, r, s, d]) => {
         setUnites(u)
         setOrdres(o)
         setRenseignements(r)
+        setStocks(s)
+        setDemandes(d)
       })
       .catch((err) => {
         console.error(err)
@@ -122,6 +138,44 @@ export default function App() {
     selectionnerRenseignement(r.id)
   }
 
+  const estLogistique = unites?.find((u) => u.id === profil?.uniteId)?.typeUnite === 'logistique'
+  const niveauLogistiqueParUnite: Record<string, NiveauStock> = Object.fromEntries(
+    (unites ?? []).map((u) => [u.id, pireNiveau((stocks ?? []).filter((s) => s.uniteId === u.id))]),
+  )
+  const nbAlertesLogistique = (unites ?? []).filter((u) => niveauLogistiqueParUnite[u.id] === 'critique').length
+  const uniteLogOuverte = unites?.find((u) => u.id === uniteLogOuverteId) ?? null
+
+  async function rechargerLogistique() {
+    const [s, d] = await Promise.all([chargerStocks(), chargerDemandes()])
+    setStocks(s)
+    setDemandes(d)
+  }
+
+  async function mettreAJourMesStocks(quantites: { id: string; quantite: number }[]) {
+    if (!profil) return
+    await mettreAJourStocks(quantites, profil.id)
+    await rechargerLogistique()
+    setUniteLogOuverteId(null)
+  }
+
+  async function demanderRavitaillement(d: DemandeRavitaillement) {
+    if (!profil) return
+    await creerDemande(d, profil.id)
+    setDemandes((prev) => [d, ...(prev ?? [])])
+    setUniteLogOuverteId(null)
+  }
+
+  async function traiterDemande(id: string, statut: 'en_cours' | 'refusee') {
+    await changerStatutDemande(id, statut)
+    setDemandes((prev) => (prev ?? []).map((d) => (d.id === id ? { ...d, statut } : d)))
+  }
+
+  async function livrer(id: string) {
+    await livrerDemande(id)
+    // Le stock de l'unité demandeuse a été crédité côté base : on relit tout.
+    await rechargerLogistique()
+  }
+
   async function changerStatut(id: string, statut: StatutRenseignement) {
     await changerStatutRenseignement(id, statut)
     setRenseignements((prev) => (prev ?? []).map((r) => (r.id === id ? { ...r, statut } : r)))
@@ -161,7 +215,7 @@ export default function App() {
     return <LoginScreen />
   }
 
-  if (!unites || !profil || !ordres || !renseignements) {
+  if (!unites || !profil || !ordres || !renseignements || !stocks || !demandes) {
     return <EcranStatut titre="Chargement du dispositif…" />
   }
 
@@ -181,6 +235,7 @@ export default function App() {
         <TacticalMap
           unites={unites}
           renseignements={renseignements}
+          niveauLogistiqueParUnite={niveauLogistiqueParUnite}
           selectedUniteId={selectedUniteId}
           onSelectUnite={selectionnerUnite}
           selectedRenseignementId={selectedRenseignementId}
@@ -206,6 +261,22 @@ export default function App() {
           onSelectOrdre={setOrdreSelectionneId}
           onNouveauRenseignement={ouvrirNouveauRenseignement}
           onOuvrirRenseignement={setRenseignementOuvertId}
+          nbAlertesLogistique={nbAlertesLogistique}
+          contenuLogistique={
+            <LogistiquePanel
+              unites={unites}
+              stocks={stocks}
+              demandes={demandes}
+              estLogistique={estLogistique}
+              onOuvrirUnite={(id) => {
+                selectionnerUnite(id)
+                setUniteLogOuverteId(id)
+              }}
+              onPrendreEnCharge={(id) => traiterDemande(id, 'en_cours')}
+              onLivrer={livrer}
+              onRefuser={(id) => traiterDemande(id, 'refusee')}
+            />
+          }
         />
       </div>
       {modaleOuverte && (
@@ -225,6 +296,16 @@ export default function App() {
           onDemanderPlacement={() => setModePlacement(true)}
           onFermer={fermerNouveauRenseignement}
           onCreer={creerRenseignement}
+        />
+      )}
+      {uniteLogOuverte && (
+        <LogistiqueUniteModal
+          unite={uniteLogOuverte}
+          stocks={stocks.filter((s) => s.uniteId === uniteLogOuverte.id)}
+          estMonUnite={uniteLogOuverte.id === profil.uniteId}
+          onFermer={() => setUniteLogOuverteId(null)}
+          onMettreAJour={mettreAJourMesStocks}
+          onDemander={demanderRavitaillement}
         />
       )}
       {renseignementOuvert && (
